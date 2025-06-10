@@ -1,4 +1,4 @@
-import 'package:agora_vc/src/domain/models/user_model.dart';
+import 'package:agora_vc/src/domain/models/user/user_model.dart';
 
 class IncomingCallModel {
   final UserModel caller;

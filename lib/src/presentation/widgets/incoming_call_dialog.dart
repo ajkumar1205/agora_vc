@@ -1,6 +1,8 @@
+import 'package:agora_vc/src/core/router/app_router.dart';
 import 'package:agora_vc/src/domain/models/incoming_call_model.dart';
-import 'package:agora_vc/src/domain/models/user_model.dart';
+import 'package:agora_vc/src/domain/models/user/user_model.dart';
 import 'package:agora_vc/src/presentation/screens/video_call_screen.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 
 class IncomingCallDialog extends StatelessWidget {
@@ -37,7 +39,7 @@ class IncomingCallDialog extends StatelessWidget {
               backgroundColor: Colors.blue.shade100,
               radius: 40,
               child: Text(
-                incomingCall.caller.avatar,
+                incomingCall.caller.name[0],
                 style: const TextStyle(fontSize: 40),
               ),
             ),
@@ -58,7 +60,7 @@ class IncomingCallDialog extends StatelessWidget {
                 // Reject call
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    context.router.pop();
                   },
                   icon: const Icon(Icons.call_end),
                   label: const Text('Decline'),
@@ -74,16 +76,13 @@ class IncomingCallDialog extends StatelessWidget {
                 // Accept call
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => VideoCallScreen(
-                          currentUser: currentUser,
-                          targetUser: incomingCall.caller,
-                          channelName: incomingCall.channelName,
-                          isCaller: false,
-                        ),
+                    context.router.pop();
+                    context.router.push(
+                      VideoCallRoute(
+                        currentUser: currentUser,
+                        targetUser: incomingCall.caller,
+                        channelName: incomingCall.channelName,
+                        isCaller: false,
                       ),
                     );
                   },

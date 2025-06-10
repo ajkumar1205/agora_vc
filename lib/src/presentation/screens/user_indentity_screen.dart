@@ -1,7 +1,9 @@
+import 'package:agora_vc/src/core/router/app_router.dart';
 import 'package:agora_vc/src/core/services/call_signaling_manager.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
 import 'package:agora_vc/src/presentation/screens/user_selection_screen.dart';
 import 'package:auto_route/annotations.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 
 @RoutePage()
@@ -35,7 +37,7 @@ class UserIdentityScreen extends StatelessWidget {
                       leading: CircleAvatar(
                         backgroundColor: Colors.green.shade100,
                         child: Text(
-                          user.avatar,
+                          user.name[0],
                           style: const TextStyle(fontSize: 24),
                         ),
                       ),
@@ -51,15 +53,8 @@ class UserIdentityScreen extends StatelessWidget {
                         onPressed: () async {
                           // Initialize signaling for this user
                           await CallSignalingManager().initialize(user);
-
                           if (context.mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    UserSelectionScreen(currentUser: user),
-                              ),
-                            );
+                            context.router.replace(UserSelectionRoute(currentUser: user));
                           }
                         },
                         icon: const Icon(Icons.person),

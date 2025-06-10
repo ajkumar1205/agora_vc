@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
-import 'package:agora_vc/src/domain/models/user_model.dart';
+import 'package:agora_vc/src/domain/models/user/user_model.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -131,7 +131,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
   void _endCall() {
     _callTimer?.cancel();
-    Navigator.of(context).pop();
+    context.router.pop();
   }
 
   @override
@@ -187,7 +187,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               backgroundColor: Colors.blue.shade100,
               radius: 60,
               child: Text(
-                widget.targetUser.avatar,
+                widget.targetUser.name[0],
                 style: const TextStyle(fontSize: 60),
               ),
             ),

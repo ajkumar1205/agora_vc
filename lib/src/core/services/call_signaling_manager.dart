@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
 import 'package:agora_vc/src/domain/models/incoming_call_model.dart';
-import 'package:agora_vc/src/domain/models/user_model.dart';
+import 'package:agora_vc/src/domain/models/user/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -73,7 +73,7 @@ class CallSignalingManager {
                   UserModel caller = availableUsers.firstWhere(
                     (user) => user.id == callerId,
                     orElse: () =>
-                        UserModel(id: callerId, name: callerName, avatar: '👤'),
+                        UserModel(id: callerId, name: callerName, email: ""),
                   );
 
                   _incomingCallController?.add(

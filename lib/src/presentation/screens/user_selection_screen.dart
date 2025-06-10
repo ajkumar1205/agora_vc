@@ -1,14 +1,15 @@
 import 'dart:async';
 
+import 'package:agora_vc/src/core/router/app_router.dart';
 import 'package:agora_vc/src/core/services/call_signaling_manager.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
 import 'package:agora_vc/src/domain/models/incoming_call_model.dart';
-import 'package:agora_vc/src/domain/models/user_model.dart';
+import 'package:agora_vc/src/domain/models/user/user_model.dart';
 import 'package:agora_vc/src/presentation/screens/video_call_screen.dart';
 import 'package:agora_vc/src/presentation/widgets/incoming_call_dialog.dart';
 import 'package:auto_route/annotations.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-
 
 @RoutePage()
 class UserSelectionScreen extends StatefulWidget {
@@ -86,7 +87,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                     backgroundColor: Colors.green.shade100,
                     radius: 25,
                     child: Text(
-                      widget.currentUser.avatar,
+                      widget.currentUser.name[0],
                       style: const TextStyle(fontSize: 28),
                     ),
                   ),
@@ -134,7 +135,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                       leading: CircleAvatar(
                         backgroundColor: Colors.blue.shade100,
                         child: Text(
-                          user.avatar,
+                          user.name[0],
                           style: const TextStyle(fontSize: 24),
                         ),
                       ),
@@ -160,15 +161,12 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                           );
 
                           if (context.mounted) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VideoCallScreen(
-                                  currentUser: widget.currentUser,
-                                  targetUser: user,
-                                  channelName: callChannelName,
-                                  isCaller: true,
-                                ),
+                            context.router.push(
+                              VideoCallRoute(
+                                currentUser: widget.currentUser,
+                                targetUser: user,
+                                channelName: callChannelName,
+                                isCaller: true,
                               ),
                             );
                           }
