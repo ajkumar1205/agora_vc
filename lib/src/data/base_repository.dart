@@ -8,7 +8,7 @@ abstract class BaseRepository<Provider> {
 
   BaseRepository({required this.provider});
 
-  dynamic get(
+  Future<dynamic> get(
     Future call
   ) async {
     try {

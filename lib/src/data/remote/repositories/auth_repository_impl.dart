@@ -1,4 +1,4 @@
-import 'package:agora_vc/src/data/remote/repositories/base_repository.dart';
+import 'package:agora_vc/src/data/base_repository.dart';
 import 'package:agora_vc/src/domain/models/base_response/base_response_model.dart';
 import 'package:agora_vc/src/domain/models/user/user_model.dart';
 import 'package:agora_vc/src/domain/providers/auth_provider.dart';
@@ -14,7 +14,7 @@ class AuthRepositoryImpl extends BaseRepository<AuthProvider>
     required String email,
     required String password,
   }) async {
-    return get(
+    return await get(
       provider.createUser(name: name, email: email, password: password),
     );
   }
@@ -24,6 +24,6 @@ class AuthRepositoryImpl extends BaseRepository<AuthProvider>
     required String email,
     required String password,
   }) async {
-    return get(provider.login(email: email, password: password));
+    return await get(provider.login(email: email, password: password));
   }
 }

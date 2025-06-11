@@ -1,4 +1,4 @@
-import 'package:agora_vc/src/data/remote/repositories/base_repository.dart';
+import 'package:agora_vc/src/data/base_repository.dart';
 import 'package:agora_vc/src/domain/models/base_response/base_response_model.dart';
 import 'package:agora_vc/src/domain/models/user/user_model.dart';
 import 'package:agora_vc/src/domain/providers/user_provider.dart';
@@ -10,6 +10,6 @@ class UserRepositoryImpl extends BaseRepository<UserProvider>
 
   @override
   Future<BaseResponseModel<List<UserModel>>> getUsers() async {
-    return get(provider.getUsers());
+    return await get(provider.getUsers());
   }
 }
