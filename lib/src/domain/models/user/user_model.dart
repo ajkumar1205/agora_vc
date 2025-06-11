@@ -8,9 +8,10 @@ part 'user_model.g.dart';
 @HiveType(typeId: 0)
 abstract class UserModel with _$UserModel {
   const factory UserModel({
-    @HiveField(0) required String id,
+    @HiveField(0) required String uid,
     @HiveField(1) required String name,
     @HiveField(2) required String email,
+    @HiveField(3) String? id,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>

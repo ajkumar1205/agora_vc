@@ -1,5 +1,5 @@
 import 'package:agora_vc/src/core/router/app_router.dart';
-import 'package:agora_vc/src/core/services/call_signaling_manager.dart';
+import 'package:agora_vc/src/core/services/call_signaling_service.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
 import 'package:agora_vc/src/presentation/screens/user_selection_screen.dart';
 import 'package:auto_route/annotations.dart';
@@ -52,9 +52,11 @@ class UserIdentityScreen extends StatelessWidget {
                       trailing: ElevatedButton.icon(
                         onPressed: () async {
                           // Initialize signaling for this user
-                          await CallSignalingManager().initialize(user);
+                          await CallSignalingService().initialize(user);
                           if (context.mounted) {
-                            context.router.replace(UserSelectionRoute(currentUser: user));
+                            context.router.replace(
+                              UserSelectionRoute(currentUser: user),
+                            );
                           }
                         },
                         icon: const Icon(Icons.person),

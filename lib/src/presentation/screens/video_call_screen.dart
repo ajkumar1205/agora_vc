@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
+import 'package:agora_vc/src/core/utils/functions.dart';
 import 'package:agora_vc/src/domain/models/user/user_model.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
@@ -96,7 +97,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     await _engine.joinChannel(
       token: token,
       channelId: widget.channelName,
-      uid: int.parse(widget.currentUser.id.replaceAll('user', '')),
+      uid: uidToNumber(widget.currentUser.id ?? ""),
       options: const ChannelMediaOptions(),
     );
   }

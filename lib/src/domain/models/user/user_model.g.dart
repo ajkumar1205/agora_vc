@@ -17,22 +17,25 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return UserModel(
-      id: fields[0] as String,
+      uid: fields[0] as String,
       name: fields[1] as String,
       email: fields[2] as String,
+      id: fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
-      ..write(obj.id)
+      ..write(obj.uid)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.email);
+      ..write(obj.email)
+      ..writeByte(3)
+      ..write(obj.id);
   }
 
   @override
@@ -51,14 +54,16 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
 // **************************************************************************
 
 _UserModel _$UserModelFromJson(Map<String, dynamic> json) => _UserModel(
-  id: json['id'] as String,
+  uid: json['uid'] as String,
   name: json['name'] as String,
   email: json['email'] as String,
+  id: json['id'] as String?,
 );
 
 Map<String, dynamic> _$UserModelToJson(_UserModel instance) =>
     <String, dynamic>{
-      'id': instance.id,
+      'uid': instance.uid,
       'name': instance.name,
       'email': instance.email,
+      'id': instance.id,
     };

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:agora_vc/src/core/router/app_router.dart';
-import 'package:agora_vc/src/core/services/call_signaling_manager.dart';
+import 'package:agora_vc/src/core/services/call_signaling_service.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
 import 'package:agora_vc/src/domain/models/incoming_call_model.dart';
 import 'package:agora_vc/src/domain/models/user/user_model.dart';
@@ -31,7 +31,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
   }
 
   void _listenForIncomingCalls() {
-    _incomingCallSubscription = CallSignalingManager().incomingCallStream
+    _incomingCallSubscription = CallSignalingService().incomingCallStream
         .listen((incomingCall) {
           if (mounted) {
             debugPrint("🔔 Incoming call from ${incomingCall.caller.name}");
@@ -154,7 +154,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                               'call_${widget.currentUser.id}_${user.id}_${DateTime.now().millisecondsSinceEpoch}';
 
                           // Send call request to target user
-                          await CallSignalingManager().sendCallRequest(
+                          await CallSignalingService().sendCallRequest(
                             widget.currentUser,
                             user,
                             callChannelName,

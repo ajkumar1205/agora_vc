@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserModel {
 
-@HiveField(0) String get id;@HiveField(1) String get name;@HiveField(2) String get email;
+@HiveField(0) String get uid;@HiveField(1) String get name;@HiveField(2) String get email;@HiveField(3) String? get id;
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,16 @@ $UserModelCopyWith<UserModel> get copyWith => _$UserModelCopyWithImpl<UserModel>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserModel&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.id, id) || other.id == id));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email);
+int get hashCode => Object.hash(runtimeType,uid,name,email,id);
 
 @override
 String toString() {
-  return 'UserModel(id: $id, name: $name, email: $email)';
+  return 'UserModel(uid: $uid, name: $name, email: $email, id: $id)';
 }
 
 
@@ -49,7 +49,7 @@ abstract mixin class $UserModelCopyWith<$Res>  {
   factory $UserModelCopyWith(UserModel value, $Res Function(UserModel) _then) = _$UserModelCopyWithImpl;
 @useResult
 $Res call({
-@HiveField(0) String id,@HiveField(1) String name,@HiveField(2) String email
+@HiveField(0) String uid,@HiveField(1) String name,@HiveField(2) String email,@HiveField(3) String? id
 });
 
 
@@ -66,12 +66,13 @@ class _$UserModelCopyWithImpl<$Res>
 
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? email = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? name = null,Object? email = null,Object? id = freezed,}) {
   return _then(_self.copyWith(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
-as String,
+as String,id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -82,12 +83,13 @@ as String,
 @JsonSerializable()
 
 class _UserModel implements UserModel {
-  const _UserModel({@HiveField(0) required this.id, @HiveField(1) required this.name, @HiveField(2) required this.email});
+  const _UserModel({@HiveField(0) required this.uid, @HiveField(1) required this.name, @HiveField(2) required this.email, @HiveField(3) this.id});
   factory _UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
 
-@override@HiveField(0) final  String id;
+@override@HiveField(0) final  String uid;
 @override@HiveField(1) final  String name;
 @override@HiveField(2) final  String email;
+@override@HiveField(3) final  String? id;
 
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
@@ -102,16 +104,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserModel&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.id, id) || other.id == id));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email);
+int get hashCode => Object.hash(runtimeType,uid,name,email,id);
 
 @override
 String toString() {
-  return 'UserModel(id: $id, name: $name, email: $email)';
+  return 'UserModel(uid: $uid, name: $name, email: $email, id: $id)';
 }
 
 
@@ -122,7 +124,7 @@ abstract mixin class _$UserModelCopyWith<$Res> implements $UserModelCopyWith<$Re
   factory _$UserModelCopyWith(_UserModel value, $Res Function(_UserModel) _then) = __$UserModelCopyWithImpl;
 @override @useResult
 $Res call({
-@HiveField(0) String id,@HiveField(1) String name,@HiveField(2) String email
+@HiveField(0) String uid,@HiveField(1) String name,@HiveField(2) String email,@HiveField(3) String? id
 });
 
 
@@ -139,12 +141,13 @@ class __$UserModelCopyWithImpl<$Res>
 
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? email = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? name = null,Object? email = null,Object? id = freezed,}) {
   return _then(_UserModel(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
-as String,
+as String,id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
