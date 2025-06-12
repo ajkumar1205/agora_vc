@@ -25,21 +25,4 @@ class CloudFunctionsService {
       throw Exception('Failed to generate Agora token: $e');
     }
   }
-
-  Future<void> sendCallNotification({
-    required UserModel caller,
-    required UserModel receiver,
-    required String channelName,
-  }) async {
-    try {
-      await _functions.httpsCallable('sendCallNotification').call({
-        'callerId': caller.id,
-        'callerName': caller.name,
-        'receiverId': receiver.id,
-        'channelName': channelName,
-      });
-    } catch (e) {
-      throw Exception('Failed to send call notification: $e');
-    }
-  }
 }

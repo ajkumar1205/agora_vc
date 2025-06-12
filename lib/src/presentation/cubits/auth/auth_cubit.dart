@@ -112,8 +112,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _localUserRepository.clearCachedUsers();
 
       emit(const AuthState.initial());
-    } on Exception catch (e) {
-      // Even if clearing fails, logout the user
+    } on Exception catch (_) {
       emit(const AuthState.initial());
     }
   }

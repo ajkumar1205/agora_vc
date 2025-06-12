@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:developer';
 
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:agora_vc/src/core/services/cloud_functions_service.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
 import 'package:agora_vc/src/core/utils/functions.dart';
 import 'package:agora_vc/src/domain/models/incoming_call_model.dart';
@@ -186,7 +187,7 @@ class CallSignalingService {
         return false;
       }
 
-      final token = await generateAgoraToken(
+      final token = await CloudFunctionsService().generateAgoraToken(
         channelName: 'global_signaling',
         uid: uid,
       );
