@@ -20,7 +20,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  bool _acceptTerms = false;
+  final _acceptTerms = true;
 
   @override
   void dispose() {
@@ -58,7 +58,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.lightBlue.shade50,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -281,63 +281,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           }
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Terms and Conditions Checkbox
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _acceptTerms,
-                            onChanged: isLoading
-                                ? null
-                                : (value) {
-                                    setState(() {
-                                      _acceptTerms = value ?? false;
-                                    });
-                                  },
-                            activeColor: Colors.lightBlue.shade600,
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: isLoading
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        _acceptTerms = !_acceptTerms;
-                                      });
-                                    },
-                              child: RichText(
-                                text: TextSpan(
-                                  text: 'I agree to the ',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade700,
-                                    fontSize: 14,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Terms & Conditions',
-                                      style: TextStyle(
-                                        color: Colors.lightBlue.shade600,
-                                        fontWeight: FontWeight.w600,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                    const TextSpan(text: ' and '),
-                                    TextSpan(
-                                      text: 'Privacy Policy',
-                                      style: TextStyle(
-                                        color: Colors.lightBlue.shade600,
-                                        fontWeight: FontWeight.w600,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                       const SizedBox(height: 24),
 

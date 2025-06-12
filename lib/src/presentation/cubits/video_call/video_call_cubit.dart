@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
@@ -7,6 +8,7 @@ import 'package:agora_vc/src/core/utils/constants.dart';
 import 'package:agora_vc/src/core/utils/functions.dart';
 import 'package:agora_vc/src/domain/models/user/user_model.dart';
 import 'package:agora_vc/src/domain/models/incoming_call_model.dart';
+import 'package:agora_vc/src/presentation/cubits/profile/profile_cubit.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 
@@ -15,8 +17,10 @@ part 'video_call_cubit.freezed.dart';
 @freezed
 class VideoCallState with _$VideoCallState {
   const factory VideoCallState.initial() = VideoCallInitial;
-  const factory VideoCallState.permissionRequesting() = VideoCallPermissionRequesting;
-  const factory VideoCallState.permissionDenied(String message) = VideoCallPermissionDenied;
+  const factory VideoCallState.permissionRequesting() =
+      VideoCallPermissionRequesting;
+  const factory VideoCallState.permissionDenied(String message) =
+      VideoCallPermissionDenied;
   const factory VideoCallState.initializing() = VideoCallInitializing;
   const factory VideoCallState.connecting() = VideoCallConnecting;
   const factory VideoCallState.ringing({
@@ -59,19 +63,12 @@ enum CallEndReason {
   busy,
 }
 
-enum NetworkQuality {
-  unknown,
-  excellent,
-  good,
-  poor,
-  bad,
-  vBad,
-  down,
-}
+enum NetworkQuality { unknown, excellent, good, poor, bad, vBad, down }
 
 class VideoCallCubit extends Cubit<VideoCallState> {
   final CallSignalingService _signalingService;
-  
+  final ProfileCubit _profileCubit;
+
   RtcEngine? _rtcEngine;
   UserModel? _currentUser;
   UserModel? _targetUser;
@@ -85,44 +82,72 @@ class VideoCallCubit extends Cubit<VideoCallState> {
   NetworkQuality _networkQuality = NetworkQuality.unknown;
   Timer? _callTimer;
   Timer? _ringTimeout;
-  
+
   StreamSubscription? _incomingCallSubscription;
   StreamSubscription? _callStatusSubscription;
   StreamSubscription? _errorSubscription;
+  StreamSubscription? _profileSubscription;
 
-  VideoCallCubit({required CallSignalingService signalingService})
-      : _signalingService = signalingService,
-        super(const VideoCallState.initial()) {
+  VideoCallCubit({
+    required CallSignalingService signalingService,
+    required ProfileCubit profileCubit,
+  }) : _signalingService = signalingService,
+       _profileCubit = profileCubit,
+       super(const VideoCallState.initial()) {
     _setupSignalingListeners();
+    _setupProfileListener();
   }
 
   void _setupSignalingListeners() {
-    _incomingCallSubscription = _signalingService.incomingCallStream.listen(
-      (incomingCall) {
-        if (state is VideoCallInitial || state is VideoCallError) {
-          emit(VideoCallState.incomingCall(incomingCall: incomingCall));
+    _incomingCallSubscription = _signalingService.incomingCallStream?.listen((
+      incomingCall,
+    ) {
+      if (state is VideoCallInitial || state is VideoCallError) {
+        emit(VideoCallState.incomingCall(incomingCall: incomingCall));
+      }
+    });
+
+    _callStatusSubscription = _signalingService.callStatusStream?.listen((
+      status,
+    ) {
+      _handleCallStatus(status);
+    });
+
+    _errorSubscription = _signalingService.errorStream?.listen((error) {
+      emit(VideoCallState.error(message: error.toString(), exception: error));
+    });
+  }
+
+  void _setupProfileListener() {
+    _profileSubscription = _profileCubit.stream.listen((state) {
+      if (state is ProfileLoaded) {
+        _currentUser = state.user;
+        if (!_signalingService.isInitialized) {
+          _initializeSignaling();
         }
-      },
-    );
+      }
+    });
+  }
 
-    _callStatusSubscription = _signalingService.callStatusStream.listen(
-      (status) {
-        _handleCallStatus(status);
-      },
-    );
+  Future<void> _initializeSignaling() async {
+    if (_currentUser == null) return;
 
-    _errorSubscription = _signalingService.errorStream.listen(
-      (error) {
-        emit(VideoCallState.error(
-          message: error.toString(),
-          exception: error,
-        ));
-      },
-    );
+    emit(VideoCallState.initializing());
+    final success = await _signalingService.initialize(_currentUser!);
+    if (!success) {
+      emit(
+        VideoCallState.error(
+          message: 'Failed to initialize signaling service',
+          exception: Exception('Signaling initialization failed'),
+        ),
+      );
+      return;
+    }
+    emit(const VideoCallState.initial());
   }
 
   void _handleCallStatus(String status) {
-    debugPrint("📞 Call status: $status");
+    log("📞 Call status: $status");
     switch (status) {
       case 'call_declined':
         _endCall(CallEndReason.declined);
@@ -141,28 +166,18 @@ class VideoCallCubit extends Cubit<VideoCallState> {
     }
   }
 
-  Future<void> initializeVideoCall(UserModel currentUser) async {
-    if (!_signalingService.isInitialized) {
-      emit(VideoCallState.initializing());
-      final success = await _signalingService.initialize(currentUser);
-      if (!success) {
-        emit(VideoCallState.error(
-          message: 'Failed to initialize signaling service',
-          exception: Exception('Signaling initialization failed'),
-        ));
-        return;
-      }
-    }
-    _currentUser = currentUser;
-    emit(const VideoCallState.initial());
+  Future<void> initializeVideoCall() async {
+    await _profileCubit.getCurrentUser();
   }
 
   Future<void> makeCall(UserModel targetUser) async {
     if (_currentUser == null) {
-      emit(VideoCallState.error(
-        message: 'Current user not set',
-        exception: Exception('Current user not initialized'),
-      ));
+      emit(
+        VideoCallState.error(
+          message: 'Current user not set',
+          exception: Exception('Current user not initialized'),
+        ),
+      );
       return;
     }
 
@@ -170,18 +185,21 @@ class VideoCallCubit extends Cubit<VideoCallState> {
     if (state is VideoCallPermissionDenied) return;
 
     _targetUser = targetUser;
-    _channelName = '${_currentUser!.id}_${targetUser.id}_${DateTime.now().millisecondsSinceEpoch}';
+    _channelName =
+        '${_currentUser!.id}_${targetUser.id}_${DateTime.now().millisecondsSinceEpoch}';
 
     emit(VideoCallState.initializing());
 
     try {
       await _initializeRtcEngine();
-      
-      emit(VideoCallState.ringing(
-        targetUser: targetUser,
-        channelName: _channelName!,
-        isOutgoing: true,
-      ));
+
+      emit(
+        VideoCallState.ringing(
+          targetUser: targetUser,
+          channelName: _channelName!,
+          isOutgoing: true,
+        ),
+      );
 
       final success = await _signalingService.sendCallRequest(
         _currentUser!,
@@ -190,10 +208,12 @@ class VideoCallCubit extends Cubit<VideoCallState> {
       );
 
       if (!success) {
-        emit(VideoCallState.error(
-          message: 'Failed to send call request',
-          exception: Exception('Call request failed'),
-        ));
+        emit(
+          VideoCallState.error(
+            message: 'Failed to send call request',
+            exception: Exception('Call request failed'),
+          ),
+        );
         return;
       }
 
@@ -203,12 +223,13 @@ class VideoCallCubit extends Cubit<VideoCallState> {
           _endCall(CallEndReason.timeout);
         }
       });
-
     } catch (e) {
-      emit(VideoCallState.error(
-        message: 'Failed to initialize call: $e',
-        exception: Exception(e),
-      ));
+      emit(
+        VideoCallState.error(
+          message: 'Failed to initialize call: $e',
+          exception: Exception(e),
+        ),
+      );
     }
   }
 
@@ -223,7 +244,7 @@ class VideoCallCubit extends Cubit<VideoCallState> {
 
     try {
       await _initializeRtcEngine();
-      
+
       final success = await _signalingService.sendCallResponse(
         incomingCall.caller.id!,
         incomingCall.channelName,
@@ -233,16 +254,20 @@ class VideoCallCubit extends Cubit<VideoCallState> {
       if (success) {
         await _joinChannel();
       } else {
-        emit(VideoCallState.error(
-          message: 'Failed to accept call',
-          exception: Exception('Call acceptance failed'),
-        ));
+        emit(
+          VideoCallState.error(
+            message: 'Failed to accept call',
+            exception: Exception('Call acceptance failed'),
+          ),
+        );
       }
     } catch (e) {
-      emit(VideoCallState.error(
-        message: 'Failed to accept call: $e',
-        exception: Exception(e),
-      ));
+      emit(
+        VideoCallState.error(
+          message: 'Failed to accept call: $e',
+          exception: Exception(e),
+        ),
+      );
     }
   }
 
@@ -264,7 +289,9 @@ class VideoCallCubit extends Cubit<VideoCallState> {
     ].request();
 
     if (statuses[Permission.microphone] != PermissionStatus.granted) {
-      emit(VideoCallState.permissionDenied('Microphone permission is required'));
+      emit(
+        VideoCallState.permissionDenied('Microphone permission is required'),
+      );
       return;
     }
 
@@ -286,56 +313,75 @@ class VideoCallCubit extends Cubit<VideoCallState> {
     _rtcEngine!.registerEventHandler(
       RtcEngineEventHandler(
         onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
-          debugPrint("✅ Joined channel: ${connection.channelId}");
+          log("✅ Joined channel: ${connection.channelId}");
           _startCallTimer();
           _updateConnectedState();
         },
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
-          debugPrint("👤 Remote user $remoteUid joined");
+          log("👤 Remote user $remoteUid joined");
           _remoteUid = remoteUid;
           _ringTimeout?.cancel();
           _updateConnectedState();
         },
-        onUserOffline: (RtcConnection connection, int remoteUid, UserOfflineReasonType reason) {
-          debugPrint("👋 Remote user $remoteUid left: $reason");
-          _remoteUid = null;
-          _endCall(CallEndReason.remoteEnded);
-        },
-        onConnectionStateChanged: (RtcConnection connection, 
-            ConnectionStateType state, ConnectionChangedReasonType reason) {
-          debugPrint("🔗 Connection state: $state, reason: $reason");
-          switch (state) {
-            case ConnectionStateType.connectionStateConnecting:
-              emit(VideoCallState.connecting());
-              break;
-            case ConnectionStateType.connectionStateReconnecting:
-              emit(VideoCallState.reconnecting());
-              break;
-            case ConnectionStateType.connectionStateFailed:
-              _endCall(CallEndReason.networkError);
-              break;
-            case ConnectionStateType.connectionStateDisconnected:
-              if (state is VideoCallConnected) {
-                _endCall(CallEndReason.networkError);
+        onUserOffline:
+            (
+              RtcConnection connection,
+              int remoteUid,
+              UserOfflineReasonType reason,
+            ) {
+              log("👋 Remote user $remoteUid left: $reason");
+              _remoteUid = null;
+              _endCall(CallEndReason.remoteEnded);
+            },
+        onConnectionStateChanged:
+            (
+              RtcConnection connection,
+              ConnectionStateType state,
+              ConnectionChangedReasonType reason,
+            ) {
+              log("🔗 Connection state: $state, reason: $reason");
+              switch (state) {
+                case ConnectionStateType.connectionStateConnecting:
+                  emit(VideoCallState.connecting());
+                  break;
+                case ConnectionStateType.connectionStateReconnecting:
+                  emit(VideoCallState.reconnecting());
+                  break;
+                case ConnectionStateType.connectionStateFailed:
+                  _endCall(CallEndReason.networkError);
+                  break;
+                case ConnectionStateType.connectionStateDisconnected:
+                  if (state is VideoCallConnected) {
+                    _endCall(CallEndReason.networkError);
+                  }
+                  break;
+                default:
+                  break;
               }
-              break;
-            default:
-              break;
-          }
-        },
-        onNetworkQuality: (RtcConnection connection, int remoteUid,
-            QualityType txQuality, QualityType rxQuality) {
-          _networkQuality = _mapQualityToNetworkQuality(txQuality, rxQuality);
-          if (this.state is VideoCallConnected) {
-            _updateConnectedState();
-          }
-        },
+            },
+        onNetworkQuality:
+            (
+              RtcConnection connection,
+              int remoteUid,
+              QualityType txQuality,
+              QualityType rxQuality,
+            ) {
+              _networkQuality = _mapQualityToNetworkQuality(
+                txQuality,
+                rxQuality,
+              );
+              if (this.state is VideoCallConnected) {
+                _updateConnectedState();
+              }
+            },
         onError: (ErrorCodeType err, String msg) {
-          debugPrint("❌ RTC Error: $err - $msg");
-          emit(VideoCallState.error(
-            message: 'RTC Error: $msg',
-            exception: Exception('RTC Error: $err - $msg'),
-          ));
+          log("❌ RTC Error: $err - $msg");
+          emit(
+            VideoCallState.error(
+              message: 'RTC Error: $msg',
+              exception: Exception('RTC Error: $err - $msg'),
+            ),
+          );
         },
       ),
     );
@@ -347,14 +393,40 @@ class VideoCallCubit extends Cubit<VideoCallState> {
   }
 
   Future<void> _joinChannel() async {
-    if (_rtcEngine == null || _channelName == null || _currentUser == null) return;
+    if (_rtcEngine == null || _channelName == null || _currentUser == null)
+      return;
 
-    await _rtcEngine!.joinChannel(
-      token: token,
-      channelId: _channelName!,
-      uid: uidToNumber(_currentUser!.id!),
-      options: const ChannelMediaOptions(),
-    );
+    try {
+      final token = await generateAgoraToken(
+        channelName: _channelName!,
+        uid: _currentUser!.id ?? _currentUser!.uid,
+      );
+
+      if (token == null) {
+        emit(
+          VideoCallState.error(
+            message: 'Failed to generate Agora token',
+            exception: Exception('Token generation failed'),
+          ),
+        );
+        return;
+      }
+
+      log("🔑 Generated Agora token successfully");
+      await _rtcEngine!.joinChannel(
+        token: token,
+        channelId: _channelName!,
+        uid: uidToNumber(_currentUser!.id ?? _currentUser!.uid),
+        options: const ChannelMediaOptions(),
+      );
+    } catch (e) {
+      emit(
+        VideoCallState.error(
+          message: 'Failed to join channel: $e',
+          exception: Exception('Channel join failed: $e'),
+        ),
+      );
+    }
   }
 
   void _startCallTimer() {
@@ -368,17 +440,19 @@ class VideoCallCubit extends Cubit<VideoCallState> {
 
   void _updateConnectedState() {
     if (_targetUser != null && _channelName != null) {
-      emit(VideoCallState.connected(
-        targetUser: _targetUser!,
-        channelName: _channelName!,
-        remoteUid: _remoteUid,
-        isVideoEnabled: _isVideoEnabled,
-        isAudioEnabled: _isAudioEnabled,
-        isSpeakerEnabled: _isSpeakerEnabled,
-        isFrontCamera: _isFrontCamera,
-        callDuration: _callDuration,
-        networkQuality: _networkQuality,
-      ));
+      emit(
+        VideoCallState.connected(
+          targetUser: _targetUser!,
+          channelName: _channelName!,
+          remoteUid: _remoteUid,
+          isVideoEnabled: _isVideoEnabled,
+          isAudioEnabled: _isAudioEnabled,
+          isSpeakerEnabled: _isSpeakerEnabled,
+          isFrontCamera: _isFrontCamera,
+          callDuration: _callDuration,
+          networkQuality: _networkQuality,
+        ),
+      );
     }
   }
 
@@ -404,7 +478,7 @@ class VideoCallCubit extends Cubit<VideoCallState> {
 
   Future<void> toggleVideo() async {
     if (_rtcEngine == null) return;
-    
+
     _isVideoEnabled = !_isVideoEnabled;
     await _rtcEngine!.enableLocalVideo(_isVideoEnabled);
     _updateConnectedState();
@@ -412,7 +486,7 @@ class VideoCallCubit extends Cubit<VideoCallState> {
 
   Future<void> toggleAudio() async {
     if (_rtcEngine == null) return;
-    
+
     _isAudioEnabled = !_isAudioEnabled;
     await _rtcEngine!.enableLocalAudio(_isAudioEnabled);
     _updateConnectedState();
@@ -420,7 +494,7 @@ class VideoCallCubit extends Cubit<VideoCallState> {
 
   Future<void> toggleSpeaker() async {
     if (_rtcEngine == null) return;
-    
+
     _isSpeakerEnabled = !_isSpeakerEnabled;
     await _rtcEngine!.setEnableSpeakerphone(_isSpeakerEnabled);
     _updateConnectedState();
@@ -428,7 +502,7 @@ class VideoCallCubit extends Cubit<VideoCallState> {
 
   Future<void> switchCamera() async {
     if (_rtcEngine == null) return;
-    
+
     await _rtcEngine!.switchCamera();
     _isFrontCamera = !_isFrontCamera;
     _updateConnectedState();
@@ -448,10 +522,7 @@ class VideoCallCubit extends Cubit<VideoCallState> {
 
     await _disposeRtcEngine();
 
-    emit(VideoCallState.ended(
-      reason: reason,
-      callDuration: _callDuration,
-    ));
+    emit(VideoCallState.ended(reason: reason, callDuration: _callDuration));
 
     // Reset state after showing end screen
     Timer(const Duration(seconds: 3), () {
@@ -483,6 +554,7 @@ class VideoCallCubit extends Cubit<VideoCallState> {
     await _incomingCallSubscription?.cancel();
     await _callStatusSubscription?.cancel();
     await _errorSubscription?.cancel();
+    await _profileSubscription?.cancel();
     _ringTimeout?.cancel();
     _callTimer?.cancel();
     await _disposeRtcEngine();

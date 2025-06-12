@@ -10,6 +10,6 @@ class UserRepositoryImpl extends BaseRepository<UserProvider>
 
   @override
   Future<BaseResponseModel<List<UserModel>>> getUsers() async {
-    return await get(provider.getUsers());
+    return await get<List<UserModel>>(provider.getUsers());
   }
 }

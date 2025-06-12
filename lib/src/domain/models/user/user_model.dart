@@ -12,6 +12,7 @@ abstract class UserModel with _$UserModel {
     @HiveField(1) required String name,
     @HiveField(2) required String email,
     @HiveField(3) String? id,
+    @HiveField(4) String? fcmToken,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>

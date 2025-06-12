@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -38,9 +39,9 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('✅ FCM permissions granted');
+      log('✅ FCM permissions granted');
     } else {
-      debugPrint('❌ FCM permissions denied');
+      log('❌ FCM permissions denied');
       return;
     }
 
@@ -49,7 +50,7 @@ class NotificationService {
 
     // Get FCM token
     String? token = await _firebaseMessaging.getToken();
-    debugPrint('📱 FCM Token: $token');
+    log('📱 FCM Token: $token');
 
     // Handle background messages
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -110,7 +111,7 @@ class NotificationService {
   }
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    debugPrint('📨 Foreground message received: ${message.messageId}');
+    log('📨 Foreground message received: ${message.messageId}');
 
     if (message.data['type'] == 'incoming_call') {
       // Show local notification with call actions
@@ -119,7 +120,7 @@ class NotificationService {
   }
 
   Future<void> _handleNotificationTap(RemoteMessage message) async {
-    debugPrint('👆 Notification tapped: ${message.messageId}');
+    log('👆 Notification tapped: ${message.messageId}');
 
     if (message.data['type'] == 'incoming_call') {
       // Navigate to video call screen or handle call acceptance
@@ -128,7 +129,7 @@ class NotificationService {
   }
 
   void _onNotificationResponse(NotificationResponse response) async {
-    debugPrint('🔔 Notification response: ${response.actionId}');
+    log('🔔 Notification response: ${response.actionId}');
 
     if (response.payload != null) {
       Map<String, dynamic> data = jsonDecode(response.payload!);
@@ -204,7 +205,7 @@ class NotificationService {
   }
 
   Future<void> _acceptCallFromNotification(Map<String, dynamic> data) async {
-    debugPrint('✅ Accepting call from notification');
+    log('✅ Accepting call from notification');
 
     // Cancel the notification
     await _localNotifications.cancel(data['caller_id'].hashCode);
@@ -229,7 +230,7 @@ class NotificationService {
   }
 
   Future<void> _declineCallFromNotification(Map<String, dynamic> data) async {
-    debugPrint('❌ Declining call from notification');
+    log('❌ Declining call from notification');
 
     // Cancel the notification
     await _localNotifications.cancel(data['caller_id'].hashCode);
@@ -239,7 +240,7 @@ class NotificationService {
   }
 
   Future<void> _handleCallFromNotification(Map<String, dynamic> data) async {
-    debugPrint('📱 Handling call from notification tap');
+    log('📱 Handling call from notification tap');
 
     // Cancel the notification
     await _localNotifications.cancel(data['caller_id'].hashCode);
@@ -268,9 +269,7 @@ class NotificationService {
     String channelName,
     bool accepted,
   ) async {
-    debugPrint(
-      '📤 Sending call response: ${accepted ? 'accepted' : 'declined'}',
-    );
+    log('📤 Sending call response: ${accepted ? 'accepted' : 'declined'}');
 
     // Send FCM message to caller
     final responseData = {
@@ -288,11 +287,11 @@ class NotificationService {
   Future<void> _sendFCMResponse(Map<String, dynamic> data) async {
     // This should be implemented to send FCM message to the caller
     // You can use your backend service or Firebase Functions
-    debugPrint('📡 Sending FCM response: $data');
+    log('📡 Sending FCM response: $data');
   }
 
   Future<void> _launchApp(Map<String, dynamic> data) async {
-    debugPrint('🚀 Launching app with data: $data');
+    log('🚀 Launching app with data: $data');
     await _navigationService.handleNotificationNavigation(data);
   }
 
@@ -316,7 +315,7 @@ class NotificationService {
 // Top-level function for background message handling
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('🔔 Background message received: ${message.messageId}');
+  log('🔔 Background message received: ${message.messageId}');
 
   if (message.data['type'] == 'incoming_call') {
     // Show local notification for incoming call

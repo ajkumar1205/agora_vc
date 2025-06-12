@@ -14,7 +14,7 @@ class AuthRepositoryImpl extends BaseRepository<AuthProvider>
     required String email,
     required String password,
   }) async {
-    return await get(
+    return await get<UserModel>(
       provider.createUser(name: name, email: email, password: password),
     );
   }
@@ -24,6 +24,8 @@ class AuthRepositoryImpl extends BaseRepository<AuthProvider>
     required String email,
     required String password,
   }) async {
-    return await get(provider.login(email: email, password: password));
+    return await get<UserModel>(
+      provider.login(email: email, password: password),
+    );
   }
 }

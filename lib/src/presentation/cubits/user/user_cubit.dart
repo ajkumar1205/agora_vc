@@ -9,10 +9,15 @@ part 'user_cubit.freezed.dart';
 
 @freezed
 class UserState with _$UserState {
-  const factory UserState.initial() = Usernitial;
+  // Base states
+  const factory UserState.initial() = UserInitial;
   const factory UserState.loading() = UserLoading;
+  const factory UserState.error(Exception error) = UserError;
+
+  // Data states
+  const factory UserState.empty() = UserEmpty;
   const factory UserState.loaded(List<UserModel> users) = UserLoaded;
-  const factory UserState.error(Exception message) = UserError;
+  const factory UserState.cleared() = UserCleared;
 }
 
 class UserCubit extends Cubit<UserState> {
@@ -73,6 +78,8 @@ class UserCubit extends Cubit<UserState> {
   }
 
   Future<void> loadCachedUsers() async {
+    emit(const UserState.loading());
+
     try {
       final response = await _localUserRepository.getCachedUsers();
 
@@ -80,10 +87,10 @@ class UserCubit extends Cubit<UserState> {
         if (response.data.isNotEmpty) {
           emit(UserState.loaded(response.data));
         } else {
-          emit(const UserState.initial());
+          emit(const UserState.empty());
         }
-      } else {
-        emit(const UserState.initial());
+      } else if (response is Failed<List<UserModel>>) {
+        emit(UserState.error(response.error));
       }
     } on Exception catch (e) {
       emit(UserState.error(e));
@@ -94,12 +101,18 @@ class UserCubit extends Cubit<UserState> {
     await getUsers(forceRefresh: true);
   }
 
-  void resetState() {
-    emit(const UserState.initial());
-  }
+  Future<void> clearUsers() async {
+    emit(const UserState.loading());
 
-  void clearUsers() async {
-    await _localUserRepository.clearCachedUsers();
-    emit(const UserState.initial());
+    try {
+      final response = await _localUserRepository.clearCachedUsers();
+      if (response is Success) {
+        emit(const UserState.cleared());
+      } else if (response is Failed) {
+        emit(UserState.error(response.error));
+      }
+    } on Exception catch (e) {
+      emit(UserState.error(e));
+    }
   }
 }

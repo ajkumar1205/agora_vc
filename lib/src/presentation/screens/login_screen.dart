@@ -25,6 +25,11 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthCubit>().login(
@@ -41,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.lightBlue.shade50,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -68,7 +73,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // App Logo/Title
                       Icon(
                         Icons.video_call,
                         size: 80,
@@ -212,29 +216,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Forgot Password
-                      TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                // TODO: Implement forgot password
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Forgot password functionality to be implemented',
-                                    ),
-                                    backgroundColor: Colors.orange,
-                                  ),
-                                );
-                              },
-                        child: Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            color: Colors.lightBlue.shade600,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 32),
 
                       // Divider

@@ -45,8 +45,8 @@ $UserStateCopyWith(UserState _, $Res Function(UserState) __);
 /// @nodoc
 
 
-class Usernitial implements UserState {
-  const Usernitial();
+class UserInitial implements UserState {
+  const UserInitial();
   
 
 
@@ -56,7 +56,7 @@ class Usernitial implements UserState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Usernitial);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserInitial);
 }
 
 
@@ -98,6 +98,104 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'UserState.loading()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class UserError implements UserState {
+  const UserError(this.error);
+  
+
+ final  Exception error;
+
+/// Create a copy of UserState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UserErrorCopyWith<UserError> get copyWith => _$UserErrorCopyWithImpl<UserError>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserError&&(identical(other.error, error) || other.error == error));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,error);
+
+@override
+String toString() {
+  return 'UserState.error(error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $UserErrorCopyWith<$Res> implements $UserStateCopyWith<$Res> {
+  factory $UserErrorCopyWith(UserError value, $Res Function(UserError) _then) = _$UserErrorCopyWithImpl;
+@useResult
+$Res call({
+ Exception error
+});
+
+
+
+
+}
+/// @nodoc
+class _$UserErrorCopyWithImpl<$Res>
+    implements $UserErrorCopyWith<$Res> {
+  _$UserErrorCopyWithImpl(this._self, this._then);
+
+  final UserError _self;
+  final $Res Function(UserError) _then;
+
+/// Create a copy of UserState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? error = null,}) {
+  return _then(UserError(
+null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as Exception,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class UserEmpty implements UserState {
+  const UserEmpty();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserEmpty);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'UserState.empty()';
 }
 
 
@@ -181,67 +279,33 @@ as List<UserModel>,
 /// @nodoc
 
 
-class UserError implements UserState {
-  const UserError(this.message);
+class UserCleared implements UserState {
+  const UserCleared();
   
 
- final  Exception message;
 
-/// Create a copy of UserState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$UserErrorCopyWith<UserError> get copyWith => _$UserErrorCopyWithImpl<UserError>(this, _$identity);
+
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserError&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserCleared);
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'UserState.error(message: $message)';
+  return 'UserState.cleared()';
 }
 
 
 }
 
-/// @nodoc
-abstract mixin class $UserErrorCopyWith<$Res> implements $UserStateCopyWith<$Res> {
-  factory $UserErrorCopyWith(UserError value, $Res Function(UserError) _then) = _$UserErrorCopyWithImpl;
-@useResult
-$Res call({
- Exception message
-});
 
 
-
-
-}
-/// @nodoc
-class _$UserErrorCopyWithImpl<$Res>
-    implements $UserErrorCopyWith<$Res> {
-  _$UserErrorCopyWithImpl(this._self, this._then);
-
-  final UserError _self;
-  final $Res Function(UserError) _then;
-
-/// Create a copy of UserState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
-  return _then(UserError(
-null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as Exception,
-  ));
-}
-
-
-}
 
 // dart format on

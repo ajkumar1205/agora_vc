@@ -8,17 +8,17 @@ abstract class BaseRepository<Provider> {
 
   BaseRepository({required this.provider});
 
-  Future<dynamic> get(
+  Future<BaseResponseModel<Type>> get<Type>(
     Future call
   ) async {
     try {
-      final res = await call;
+      final res = (await call) as Type?;
       if (res == null) {
-        return BaseResponseModel.failed(Exception("Something went wrong"));
+        return BaseResponseModel<Type>.failed(Exception("Something went wrong"));
       }
-      return BaseResponseModel.success(res);
+      return BaseResponseModel<Type>.success(res);
     } on Exception catch (e) {
-      return BaseResponseModel.failed(e);
+      return BaseResponseModel<Type>.failed(e);
     }
   }
 }

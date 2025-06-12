@@ -1,88 +1,81 @@
 import 'dart:convert';
+import 'dart:async';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:agora_vc/src/domain/models/user/user_model.dart';
+import 'package:agora_vc/src/core/utils/constants.dart';
 
 class FCMService {
   static final FCMService _instance = FCMService._internal();
   factory FCMService() => _instance;
   FCMService._internal();
 
-  // TODO: Replace with your Firebase Server Key
-  static const String _serverKey = 'YOUR_FIREBASE_SERVER_KEY';
-  static const String _fcmUrl = 'https://fcm.googleapis.com/fcm/send';
+  static const _timeout = Duration(seconds: 10);
+  final _client = http.Client();
 
   Future<bool> sendCallNotification({
     required UserModel caller,
     required UserModel target,
     required String channelName,
-    required String targetFCMToken,
   }) async {
+    if (target.fcmToken == null || target.fcmToken!.isEmpty) {
+      log('❌ Cannot send call notification: Target FCM token is null or empty');
+      return false;
+    }
+
+    if (caller.id == null && caller.uid.isEmpty) {
+      log('❌ Cannot send call notification: Caller ID is invalid');
+      return false;
+    }
+
     try {
-      final notification = {
-        'title': 'Incoming Video Call',
-        'body': '${caller.name} is calling...',
-        'sound': 'default',
-        'priority': 'high',
-        'android_channel_id': 'video_call_channel',
+      final url = Uri.parse('$cloudFunctionsBaseUrl/sendCallNotification');
+
+      final body = {
+        'caller': {'id': caller.id ?? caller.uid, 'name': caller.name},
+        'target': {'id': target.id ?? target.uid, 'fcmToken': target.fcmToken},
+        'channelName': channelName,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
 
-      final data = {
-        'type': 'incoming_call',
-        'caller_id': caller.id,
-        'caller_name': caller.name,
-        'target_id': target.id,
-        'channel_name': channelName,
-        'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
-      };
-
-      final message = {
-        'to': targetFCMToken,
-        'notification': notification,
-        'data': data,
-        'priority': 'high',
-        'android': {
-          'priority': 'high',
-          'notification': {
-            'channel_id': 'video_call_channel',
-            'priority': 'high',
-            'default_sound': true,
-            'default_vibrate': true,
-          },
-        },
-        'apns': {
-          'payload': {
-            'aps': {
-              'alert': {
-                'title': notification['title'],
-                'body': notification['body'],
-              },
-              'sound': 'default',
-              'category': 'CALL_CATEGORY',
-              'interruption-level': 'critical',
+      final response = await _client
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
             },
-          },
-        },
-      };
-
-      final response = await http.post(
-        Uri.parse(_fcmUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'key=$_serverKey',
-        },
-        body: jsonEncode(message),
-      );
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
 
       if (response.statusCode == 200) {
-        debugPrint('✅ FCM call notification sent successfully');
-        return true;
+        try {
+          final responseData = jsonDecode(response.body);
+          if (responseData['success'] == true) {
+            log('✅ Call notification sent successfully via Cloud Functions');
+            return true;
+          }
+          log(
+            '❌ Call notification failed: ${responseData['message'] ?? 'Unknown error'}',
+          );
+          return false;
+        } catch (e) {
+          log('❌ Error parsing call notification response: $e');
+          return false;
+        }
       } else {
-        debugPrint('❌ Failed to send FCM notification: ${response.body}');
+        log(
+          '❌ Failed to send call notification: ${response.statusCode} - ${response.body}',
+        );
         return false;
       }
+    } on TimeoutException {
+      log('❌ Call notification request timed out');
+      return false;
     } catch (e) {
-      debugPrint('❌ Error sending FCM notification: $e');
+      log('❌ Error sending call notification: $e');
       return false;
     }
   }
@@ -94,36 +87,62 @@ class FCMService {
     required bool accepted,
     required UserModel responder,
   }) async {
+    if (targetFCMToken.isEmpty || callerId.isEmpty) {
+      log('❌ Cannot send call response: Invalid target token or caller ID');
+      return false;
+    }
+
     try {
-      final data = {
-        'type': accepted ? 'call_accepted' : 'call_declined',
-        'responder_id': responder.id,
-        'responder_name': responder.name,
-        'caller_id': callerId,
-        'channel_name': channelName,
-        'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
+      final url = Uri.parse('$cloudFunctionsBaseUrl/sendCallResponse');
+
+      final body = {
+        'caller': {'id': callerId, 'fcmToken': targetFCMToken},
+        'responder': {
+          'id': responder.id ?? responder.uid,
+          'name': responder.name,
+        },
+        'channelName': channelName,
+        'accepted': accepted,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
 
-      final message = {'to': targetFCMToken, 'data': data, 'priority': 'high'};
-
-      final response = await http.post(
-        Uri.parse(_fcmUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'key=$_serverKey',
-        },
-        body: jsonEncode(message),
-      );
+      final response = await _client
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
 
       if (response.statusCode == 200) {
-        debugPrint('✅ FCM call response sent successfully');
-        return true;
+        try {
+          final responseData = jsonDecode(response.body);
+          if (responseData['success'] == true) {
+            log('✅ Call response sent successfully via Cloud Functions');
+            return true;
+          }
+          log(
+            '❌ Call response failed: ${responseData['message'] ?? 'Unknown error'}',
+          );
+          return false;
+        } catch (e) {
+          log('❌ Error parsing call response: $e');
+          return false;
+        }
       } else {
-        debugPrint('❌ Failed to send FCM response: ${response.body}');
+        log(
+          '❌ Failed to send call response: ${response.statusCode} - ${response.body}',
+        );
         return false;
       }
+    } on TimeoutException {
+      log('❌ Call response request timed out');
+      return false;
     } catch (e) {
-      debugPrint('❌ Error sending FCM response: $e');
+      log('❌ Error sending call response: $e');
       return false;
     }
   }
@@ -134,39 +153,68 @@ class FCMService {
     required String channelName,
     required UserModel sender,
   }) async {
+    if (targetFCMToken.isEmpty || callerId.isEmpty) {
+      log(
+        '❌ Cannot send call end notification: Invalid target token or caller ID',
+      );
+      return false;
+    }
+
     try {
-      final data = {
-        'type': 'call_ended',
-        'sender_id': sender.id,
-        'sender_name': sender.name,
-        'caller_id': callerId,
-        'channel_name': channelName,
-        'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
+      final url = Uri.parse('$cloudFunctionsBaseUrl/sendCallEndNotification');
+
+      final body = {
+        'caller': {'id': callerId},
+        'target': {'fcmToken': targetFCMToken},
+        'sender': {'id': sender.id ?? sender.uid, 'name': sender.name},
+        'channelName': channelName,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
 
-      final message = {'to': targetFCMToken, 'data': data, 'priority': 'high'};
-
-      final response = await http.post(
-        Uri.parse(_fcmUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'key=$_serverKey',
-        },
-        body: jsonEncode(message),
-      );
+      final response = await _client
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
 
       if (response.statusCode == 200) {
-        debugPrint('✅ FCM call end notification sent successfully');
-        return true;
+        try {
+          final responseData = jsonDecode(response.body);
+          if (responseData['success'] == true) {
+            log(
+              '✅ Call end notification sent successfully via Cloud Functions',
+            );
+            return true;
+          }
+          log(
+            '❌ Call end notification failed: ${responseData['message'] ?? 'Unknown error'}',
+          );
+          return false;
+        } catch (e) {
+          log('❌ Error parsing call end notification response: $e');
+          return false;
+        }
       } else {
-        debugPrint(
-          '❌ Failed to send FCM call end notification: ${response.body}',
+        log(
+          '❌ Failed to send call end notification: ${response.statusCode} - ${response.body}',
         );
         return false;
       }
+    } on TimeoutException {
+      log('❌ Call end notification request timed out');
+      return false;
     } catch (e) {
-      debugPrint('❌ Error sending FCM call end notification: $e');
+      log('❌ Error sending call end notification: $e');
       return false;
     }
+  }
+
+  void dispose() {
+    _client.close();
   }
 }

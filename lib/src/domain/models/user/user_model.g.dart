@@ -21,13 +21,14 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       name: fields[1] as String,
       email: fields[2] as String,
       id: fields[3] as String?,
+      fcmToken: fields[4] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.uid)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(2)
       ..write(obj.email)
       ..writeByte(3)
-      ..write(obj.id);
+      ..write(obj.id)
+      ..writeByte(4)
+      ..write(obj.fcmToken);
   }
 
   @override
@@ -58,6 +61,7 @@ _UserModel _$UserModelFromJson(Map<String, dynamic> json) => _UserModel(
   name: json['name'] as String,
   email: json['email'] as String,
   id: json['id'] as String?,
+  fcmToken: json['fcmToken'] as String?,
 );
 
 Map<String, dynamic> _$UserModelToJson(_UserModel instance) =>
@@ -66,4 +70,5 @@ Map<String, dynamic> _$UserModelToJson(_UserModel instance) =>
       'name': instance.name,
       'email': instance.email,
       'id': instance.id,
+      'fcmToken': instance.fcmToken,
     };

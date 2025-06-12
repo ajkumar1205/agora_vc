@@ -75,69 +75,6 @@ class SignUpRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [UserIdentityScreen]
-class UserIdentityRoute extends PageRouteInfo<void> {
-  const UserIdentityRoute({List<PageRouteInfo>? children})
-    : super(UserIdentityRoute.name, initialChildren: children);
-
-  static const String name = 'UserIdentityRoute';
-
-  static PageInfo page = PageInfo(
-    name,
-    builder: (data) {
-      return const UserIdentityScreen();
-    },
-  );
-}
-
-/// generated route for
-/// [UserSelectionScreen]
-class UserSelectionRoute extends PageRouteInfo<UserSelectionRouteArgs> {
-  UserSelectionRoute({
-    Key? key,
-    required UserModel currentUser,
-    List<PageRouteInfo>? children,
-  }) : super(
-         UserSelectionRoute.name,
-         args: UserSelectionRouteArgs(key: key, currentUser: currentUser),
-         initialChildren: children,
-       );
-
-  static const String name = 'UserSelectionRoute';
-
-  static PageInfo page = PageInfo(
-    name,
-    builder: (data) {
-      final args = data.argsAs<UserSelectionRouteArgs>();
-      return UserSelectionScreen(key: args.key, currentUser: args.currentUser);
-    },
-  );
-}
-
-class UserSelectionRouteArgs {
-  const UserSelectionRouteArgs({this.key, required this.currentUser});
-
-  final Key? key;
-
-  final UserModel currentUser;
-
-  @override
-  String toString() {
-    return 'UserSelectionRouteArgs{key: $key, currentUser: $currentUser}';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    if (other is! UserSelectionRouteArgs) return false;
-    return key == other.key && currentUser == other.currentUser;
-  }
-
-  @override
-  int get hashCode => key.hashCode ^ currentUser.hashCode;
-}
-
-/// generated route for
 /// [VideoCallScreen]
 class VideoCallRoute extends PageRouteInfo<VideoCallRouteArgs> {
   VideoCallRoute({

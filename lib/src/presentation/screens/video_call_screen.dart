@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:developer';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:agora_vc/src/core/utils/constants.dart';
 import 'package:agora_vc/src/core/utils/functions.dart';
@@ -38,27 +38,59 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   }
 
   Future<void> _initializeEngine() async {
-    // Initialize engine for video rendering
-    _engine = createAgoraRtcEngine();
-    await _engine!.initialize(
-      const RtcEngineContext(
-        appId: appId,
-        channelProfile: ChannelProfileType.channelProfileCommunication,
-      ),
-    );
+    try {
+      // Initialize engine for video rendering
+      _engine = createAgoraRtcEngine();
+      await _engine!.initialize(
+        const RtcEngineContext(
+          appId: appId,
+          channelProfile: ChannelProfileType.channelProfileCommunication,
+        ),
+      );
 
-    await _engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
-    await _engine!.enableVideo();
-    await _engine!.enableAudio();
-    await _engine!.startPreview();
+      await _engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+      await _engine!.enableVideo();
+      await _engine!.enableAudio();
+      await _engine!.startPreview();
 
-    // Join the channel using the cubit's channel name
-    await _engine!.joinChannel(
-      token: token,
-      channelId: widget.channelName,
-      uid: uidToNumber(widget.currentUser.id ?? ""),
-      options: const ChannelMediaOptions(),
-    );
+      // Get token from cloud function
+      final token = await generateAgoraToken(
+        channelName: widget.channelName,
+        uid: widget.currentUser.id ?? widget.currentUser.uid,
+      );
+
+      if (token == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to generate token'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          context.router.pop();
+        }
+        return;
+      }
+
+      log("🔑 Generated Agora token successfully");
+      await _engine!.joinChannel(
+        token: token,
+        channelId: widget.channelName,
+        uid: uidToNumber(widget.currentUser.id ?? widget.currentUser.uid),
+        options: const ChannelMediaOptions(),
+      );
+    } catch (e) {
+      log("❌ Error initializing engine: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to initialize video: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        context.router.pop();
+      }
+    }
   }
 
   String _formatDuration(int seconds) {
